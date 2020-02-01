@@ -1,5 +1,8 @@
 import sqlite3
 from sys import stdout
+from timeit import default_timer as timer
+import re
+
 
 current_chat = r'.\chats\sherks.txt'
 conn = sqlite3.connect("sherks.db")
@@ -46,26 +49,24 @@ def parseChat(row):
     date_sent = ''
     time_sent = ''
     author_name = ''
-    i = 0
-    if row[8] == ",":  # 4-digits day and month
-        date_sent = row[0:8]
-        time_sent = row[10:15]
-        i = 18
-    elif row[7] == ",":  # 3-digits day month
-        date_sent = row[0:7]
-        time_sent = row[9:14]
-        i = 17
-    elif row[6] == ",":  # 2-digits day and month
-        date_sent = row[0:6]
-        time_sent = row[8:13]
-        i = 16
-    # get author's name
-    if ":" in row[i:]:
-        while row[i] != ":":
-            author_name += row[i]
-            i += 1
-    # get message content
-    msg_content = row[i+1:]
+    msg_content = ''
+    find_date = re.search(r'([1-9]|1[0-2])(/)([1-9]|[1-3][0-9])(/)\d{2}', row)
+    if find_date is None and row != '\n':  # continued message
+        msg_content = row
+    elif find_date is None and row == '\n':  # empty row
+        pass
+    else:  # regular row
+        a, z = find_date.span()  # get date start and end
+        date_sent = row[a:z]  # get date
+        time_sent = row[z+2:z+7]  # get time
+        # get author's name
+        i = z + 10
+        if ":" in row[i:]:
+            while row[i] != ":":
+                author_name += row[i]
+                i += 1
+        # get message content
+        msg_content = row[i+1:]
     return date_sent, time_sent, author_name, msg_content
 
 
@@ -87,6 +88,7 @@ def main():
     prog = 0
     chat, log = openChat(current_chat)
     Database.clearTable()
+    start = timer()
     for line in chat:
         try:
             date, time, author, content = parseChat(line)
@@ -95,11 +97,12 @@ def main():
             log.write("Error: \n" + line)
         prog += 1
         progress(prog, tot_lines)
+    end = timer()
+    tot_time = end - start
+    print('\nTime elapsed: ' + str(round(tot_time / 60, 0)) + ' min.')
     log.close()
     conn.close()
 
 
 if __name__ == "__main__":
     main()
-
-#  Shalom le kulam
