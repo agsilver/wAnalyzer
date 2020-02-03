@@ -27,6 +27,11 @@ class Database:
     def clearTable():
         c.execute("DELETE from data;")
 
+    @staticmethod  # add text to data column
+    def updateRow(msg_content, uid):
+        c.execute('UPDATE data set content = content || ? WHERE id = ?', (msg_content, uid))
+        conn.commit()
+
 
 #  Open a chat file and an error log file and make sure the encoding is correct.
 def openChat(path):
