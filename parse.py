@@ -16,12 +16,10 @@ class Database:
     def dump(date_sent, time_sent, author_name, msg_content, uid):
         c.execute("INSERT INTO data (date, time, author, content, id) values (?, ?, ?, ?, ?)",
                   (date_sent, time_sent, author_name, msg_content, uid))
-        conn.commit()
 
     @staticmethod  # insert data to one column only.
     def insert(column, text):
         c.execute("INSERT INTO data (%s) values (?)" % (column,), (text,))
-        conn.commit()
 
     @staticmethod  # clear the entire table.
     def clearTable():
@@ -29,8 +27,7 @@ class Database:
 
     @staticmethod  # add text to data column
     def updateRow(msg_content, uid):
-        c.execute('UPDATE data set content = content || ? WHERE id = ?', (msg_content, uid))
-        conn.commit()
+        c.execute('UPDATE data set content = content || ? WHERE id = ?',  (msg_content, uid))
 
 
 #  Open a chat file and an error log file and make sure the encoding is correct.
@@ -41,10 +38,22 @@ def openChat(path):
 
 
 # number of lines in chat file.
-def chatLength(f):
-    temp_file = f
-    k = list(enumerate(temp_file))[-1][0] + 1
+def chatLength(path):
+    chat_file = open(path, 'r', encoding='utf-8')
+    k = len(list(chat_file)) + 1
     return k
+
+
+#  progress display
+def progress(part, whole, cmplt_msg):
+    percent_raw = round((part/whole)*100, 1)
+    percent = str(percent_raw) + "%"
+    stdout.write('\r')
+    if percent_raw == 100.0:
+        stdout.write("100.0% - " + cmplt_msg)
+    else:
+        stdout.write(percent)
+    stdout.flush()
 
 
 #  Parse chat rows for data.
@@ -78,41 +87,45 @@ def parseChat(row):
         return date_sent, time_sent, author_name, msg_content, unique_id
 
 
-#  progress display
-def progress(part, whole):
-    percent_raw = round((part/whole)*100, 1)
-    percent = str(percent_raw) + "%"
-    stdout.write('\r')
-    if percent_raw == 100.0:
-        stdout.write("100.0% - parsing completed.")
-    else:
-        stdout.write(percent)
-    stdout.flush()
-
-
-def main():
+def getData():  # ectract raw data from chat and dump in db
     chat, log = openChat(current_chat)
-    tot_lines = chatLength(chat)
+    tot_lines = chatLength(current_chat)
     prog = 0
-    chat, log = openChat(current_chat)
     Database.clearTable()
-    start = timer()
+    id_holder = ''
+    batch = 1
+    cmplt_msg = 'chat data extraction completed.'
     for line in chat:
         try:
             date, time, author, content, uid = parseChat(line)
             if content is None:
                 pass
+            elif date is None:
+                Database.updateRow(content, id_holder)
             else:
                 Database.dump(date, time, author, content, uid)
+                id_holder = uid
         except IndexError:
             log.write("Index error: \n" + line)
         prog += 1
-        progress(prog, tot_lines)
+        try:
+            if prog % 100 == 0:
+                conn.commit()
+                batch += 1
+        except ValueError:
+            print('Error in batch #', batch)
+        progress(prog, tot_lines, cmplt_msg)
+    conn.commit()
+    log.close()
+    conn.close()
+
+
+def main():
+    start = timer()
+    getData()
     end = timer()
     tot_time = end - start
     print('\nTime elapsed: ' + str(round(tot_time / 60, 0)) + ' min.')
-    log.close()
-    conn.close()
 
 
 if __name__ == "__main__":
