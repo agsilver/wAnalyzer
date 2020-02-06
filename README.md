@@ -1,3 +1,1 @@
-# wAnalyzer
-![Image description](link-to-image)
-(someday) a smart Whatsapp chat analayzer.
+# ![logo](https://i.imgur.com/XQAushO.png)
