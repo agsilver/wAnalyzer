@@ -8,9 +8,8 @@ test.py
 chats/test.txt
 chats/sherks.txt
 log.txt
-sherks.db
+chat_data.db
 .idea/vcs.xml
 errors_log.txt
-chat_data.db
 chat_data.db-journal
 .idea/inspectionProfiles/Project_Default.xml
