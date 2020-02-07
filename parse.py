@@ -61,7 +61,8 @@ def parseChat(row):
     # get time and date
     date_sent, time_sent, author_name, msg_content = ['']*4
     unique_id = str(uuid.uuid4())
-    find_date = re.search(r'([1-9]|1[0-2])(/)([1-9]|[1-3][0-9])(/)\d{2}', row)  # RegEx searching for WhatsApp date formats.
+    # RegEx for WhatsApp date formats.
+    find_date = re.search(r'([1-9]|1[0-2])(/)([1-9]|[1-3][0-9])(/)\d{2}(, )\d', row)
     if find_date is None and row != '\n':  # continued message
         msg_content = row
         date_sent, time_sent, author_name = [None] * 3
@@ -69,10 +70,10 @@ def parseChat(row):
         pass
     else:  # regular row
         a, z = find_date.span()  # get date start and end
-        date_sent = row[a:z]  # get date
-        time_sent = row[z+2:z+7]  # get time
+        date_sent = row[a:z-3]  # get date
+        time_sent = row[z-1:z+4]  # get time
         # get author's name
-        i = z + 10
+        i = z + 7
         if ":" in row[i:]:
             while row[i] != ":":
                 author_name += row[i]
@@ -94,6 +95,7 @@ def getData():  # ectract raw data from chat and dump in db
     Database.clearTable()
     id_holder = ''
     batch = 1
+    batch_size = 500
     cmplt_msg = 'chat data extraction completed.'
     for line in chat:
         try:
@@ -109,7 +111,7 @@ def getData():  # ectract raw data from chat and dump in db
             log.write("Index error: \n" + line)
         prog += 1
         try:
-            if prog % 100 == 0:
+            if prog % batch_size == 0:
                 conn.commit()
                 batch += 1
         except ValueError:
@@ -118,6 +120,16 @@ def getData():  # ectract raw data from chat and dump in db
     conn.commit()
     log.close()
     conn.close()
+
+
+# get all group participants
+def get_people():
+    people = c.execute('select distinct author from data')
+    names = []
+    for name in people:
+        if name[0] != '':
+            names.append(name[0])
+    return tuple(names)
 
 
 def main():
