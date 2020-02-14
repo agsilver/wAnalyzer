@@ -8,8 +8,17 @@ test.py
 chats/test.txt
 chats/sherks.txt
 log.txt
+<<<<<<< HEAD
+sherks.db
+chat_data.db
+.idea/inspectionProfiles/Project_Default.xml
+.idea/vcs.xml
+errors_log.txt
+=======
 chat_data.db
 .idea/vcs.xml
 errors_log.txt
 chat_data.db-journal
 .idea/inspectionProfiles/Project_Default.xml
+>>>>>>> develop
+__pycache__/parse.cpython-38.pyc
