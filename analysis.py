@@ -11,17 +11,37 @@ def tpl2list(sql_tuples, idx):
     return lst
 
 
+def getppl():
+    ppll = []
+    pplt = c.execute("SELECT DISTINCT author from data")
+    for author in pplt:
+        if author[0] != '':
+            ppll.append(author[0])
+    return ppll
+
+
 def top_char_user(char):
     # input a char and find who uses it the most and how much
-    occur = []
+    ppl = getppl()
+    scores = [0] * len(ppl)
     cont_msgs = c.execute("SELECT content, author FROM data "
-                          "WHERE content LIKE '%" + char + "%' ")  # find all messages containing a character
+                          "WHERE content LIKE '%" + char + "%' ").fetchall()  # find all messages containing a character
     ppl_list = tpl2list(cont_msgs, 1)
-    msgs_list = tpl2list(cont_msgs, 2)
-    [occur.append(msg.count(char)) for msg in msgs_list]
-    winner = statistics.mode(ppl_list)
-    return winner
+    msgs_list = tpl2list(cont_msgs, 0)
+    j = 0
+    for msg in msgs_list:
+        occur = msg.count(char)
+        try:
+            scores[ppl.index(ppl_list[j])] += occur
+        except ValueError:
+            pass
+        j += 1
+    score = max(scores)
+    top = ppl[scores.index(score)]
+    return top, score
 
 
-winnner = top_char_user('!')
-print(winnner)
+keyword = ""
+winner, points = top_char_user(keyword)
+print("The user who uses '" + keyword + "' the most is: " + winner + "\nTimes used: " + str(points) + ".")
+

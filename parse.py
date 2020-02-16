@@ -95,7 +95,7 @@ def getData():  # ectract raw data from chat and dump in db
     Database.clearTable()
     id_holder = ''
     batch = 1
-    batch_size = 500
+    batch_size = 1000
     cmplt_msg = 'chat data extraction completed.'
     for line in chat:
         try:
