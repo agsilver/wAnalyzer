@@ -1,5 +1,4 @@
 import sqlite3
-import statistics
 
 conn = sqlite3.connect("chat_data.db")
 c = conn.cursor()
@@ -41,7 +40,23 @@ def top_char_user(char):
     return top, score
 
 
-keyword = ""
-winner, points = top_char_user(keyword)
-print("The user who uses '" + keyword + "' the most is: " + winner + "\nTimes used: " + str(points) + ".")
-
+def personalStas():
+    #  get list of all participants
+    ppl = getppl()
+    stats_list = []
+    for person in ppl:
+        word_count = 0
+        letter_count = 0
+        media = 0
+        #  get all messages from author
+        msgs = c.execute("SELECT content FROM data WHERE author = ?", (person,)).fetchall()
+        #  get personal word & letter count
+        for msg in msgs:
+            if "<Media omitted>" not in msg[0]:
+                word_count += msg[0].count(' ') + 1
+                letter_count += len(msg[0])
+            else:
+                media += 1
+        msg_count = len(msgs)
+        stats_list.append((person, msg_count, word_count, letter_count, media))
+    return stats_list
