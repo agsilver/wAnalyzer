@@ -9,10 +9,14 @@ jdb = TinyDB('analysis_db.json')
 qu = Query()
 
 
-def getppl():
+def getppl():  # get list of people in chat
     people = c.execute("SELECT DISTINCT author from data WHERE author != '' ").fetchall()
     pplist = [i[0] for i in people]
     return pplist
+
+
+def takeSecond(elem):  # helper function for .sort()
+    return elem[1]
 
 
 def topChar(char):  # input a char and find who uses it the most and how much
@@ -26,25 +30,10 @@ def topChar(char):  # input a char and find who uses it the most and how much
         for msg in query:
             scores[j][1] += msg[0].count(char)
         j += 1
-    return scores
-    # j = 0
-    # for msg in msgs_list:
-    #     occur = msg.count(char)
-    #     try:
-    #         scores[ppl.index(ppl_list[j])] += occur
-    #     except ValueError:
-    #         pass
-    #     j += 1
-    # score = max(scores)
-    # top = ppl[scores.index(score)]
+    return sorted(scores, key=takeSecond)
 
 
-pplz = topChar('!')
-print(pplz)
-
-
-def personalStas():
-    #  get list of all participants
+def personalStas():  # get msg count, word and character counts for all participants
     ppl = getppl()
     stats_list = []
     for person in ppl:
