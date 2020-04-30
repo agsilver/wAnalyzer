@@ -1,6 +1,5 @@
 import sqlite3
 from sys import stdout
-from timeit import default_timer as timer
 import re
 import uuid
 
@@ -13,9 +12,9 @@ c = conn.cursor()
 #  Database tools
 class Database:
     @staticmethod  # dump entire message data to the table.
-    def dump(date_sent, time_sent, author_name, msg_content, uid):
-        c.execute("INSERT INTO data (date, time, author, content, id) values (?, ?, ?, ?, ?)",
-                  (date_sent, time_sent, author_name, msg_content, uid))
+    def dump(date_sent, time_sent, author_name, msg_content, msgid, requestid):
+        c.execute("INSERT INTO data (date, time, author, content, msg_id, request_id) values (?, ?, ?, ?, ?, ?)",
+                  (date_sent, time_sent, author_name, msg_content, msgid, requestid))
 
     @staticmethod  # insert data to one column only.
     def insert(column, text):
@@ -26,8 +25,8 @@ class Database:
         c.execute("DELETE from data;")
 
     @staticmethod  # add text to data column
-    def updateRow(msg_content, uid):
-        c.execute('UPDATE data set content = content || ? WHERE id = ?',  (msg_content, uid))
+    def updateRow(msg_content, msgid):
+        c.execute('UPDATE data set content = content || ? WHERE msg_id = ?',  (msg_content, msgid))
 
 
 #  Open a chat file and an error log file and make sure the encoding is correct.
@@ -88,25 +87,24 @@ def parseChat(row):
         return date_sent, time_sent, author_name, msg_content, unique_id
 
 
-def getData():  # ectract raw data from chat and dump in db
-    chat, log = openChat(current_chat)
-    tot_lines = chatLength(current_chat)
+def getData(chat_name, requestid):  # extract raw data from chat and dump in SQL db
+    chat, log = openChat(chat_name)
+    tot_lines = chatLength(chat_name)
     prog = 0
-    Database.clearTable()
     id_holder = ''
     batch = 1
     batch_size = 1000
     cmplt_msg = 'chat data extraction completed.'
     for line in chat:
         try:
-            date, time, author, content, uid = parseChat(line)
+            date, time, author, content, msgid = parseChat(line)
             if content is None:
                 pass
             elif date is None:
                 Database.updateRow(content, id_holder)
             else:
-                Database.dump(date, time, author, content, uid)
-                id_holder = uid
+                Database.dump(date, time, author, content, msgid, requestid)
+                id_holder = msgid
         except IndexError:
             log.write("Index error: \n" + line)
         prog += 1
@@ -120,25 +118,3 @@ def getData():  # ectract raw data from chat and dump in db
     conn.commit()
     log.close()
     conn.close()
-
-
-# get all group participants
-def get_people():
-    people = c.execute('select distinct author from data')
-    names = []
-    for name in people:
-        if name[0] != '':
-            names.append(name[0])
-    return tuple(names)
-
-
-def main():
-    start = timer()
-    getData()
-    end = timer()
-    tot_time = end - start
-    print('\nTime elapsed: ' + str(round(tot_time / 60, 0)) + ' min.')
-
-
-if __name__ == "__main__":
-    main()

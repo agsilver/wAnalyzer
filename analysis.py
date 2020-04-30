@@ -1,47 +1,39 @@
 import sqlite3
+from tinydb import TinyDB, Query
 
+# SQL
 conn = sqlite3.connect("chat_data.db")
 c = conn.cursor()
+# JSON
+jdb = TinyDB('analysis_db.json')
+qu = Query()
 
 
-def tpl2list(sql_tuples, idx):
-    lst = []
-    [lst.append(tpl[idx]) for tpl in sql_tuples]
-    return lst
+def getppl():  # get list of people in chat
+    people = c.execute("SELECT DISTINCT author from data WHERE author != '' ").fetchall()
+    pplist = [i[0] for i in people]
+    return pplist
 
 
-def getppl():
-    ppll = []
-    pplt = c.execute("SELECT DISTINCT author from data")
-    for author in pplt:
-        if author[0] != '':
-            ppll.append(author[0])
-    return ppll
+def takeSecond(elem):  # helper function for .sort()
+    return elem[1]
 
 
-def top_char_user(char):
-    # input a char and find who uses it the most and how much
+def topChar(char):  # input a char and find who uses it the most and how much
     ppl = getppl()
-    scores = [0] * len(ppl)
-    cont_msgs = c.execute("SELECT content, author FROM data "
-                          "WHERE content LIKE '%" + char + "%' ").fetchall()  # find all messages containing a character
-    ppl_list = tpl2list(cont_msgs, 1)
-    msgs_list = tpl2list(cont_msgs, 0)
+    scores = [['', 0] for i in range(len(ppl))]
     j = 0
-    for msg in msgs_list:
-        occur = msg.count(char)
-        try:
-            scores[ppl.index(ppl_list[j])] += occur
-        except ValueError:
-            pass
+    for person in ppl:
+        scores[j][0] = person
+        query = c.execute("SELECT content FROM data "
+                          "WHERE author = ? AND content LIKE '%" + char + "%' ", (person,)).fetchall()
+        for msg in query:
+            scores[j][1] += msg[0].count(char)
         j += 1
-    score = max(scores)
-    top = ppl[scores.index(score)]
-    return top, score
+    return sorted(scores, key=takeSecond)
 
 
-def personalStas():
-    #  get list of all participants
+def personalStas():  # get msg count, word and character counts for all participants
     ppl = getppl()
     stats_list = []
     for person in ppl:
