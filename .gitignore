@@ -8,6 +8,7 @@ test.py
 chats/test.txt
 chats/sherks.txt
 log.txt
+chats
 <<<<<<< HEAD
 sherks.db
 chat_data.db
@@ -27,3 +28,4 @@ chats/benkalifa.txt
 chats/benkalifa.txt
 analysis_db.json
 chats/templars.txt
+chats
