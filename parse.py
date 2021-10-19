@@ -77,6 +77,7 @@ def parseChat(row):
             while row[i] != ":":
                 author_name += row[i]
                 i += 1
+        author_name = author_name.lstrip(" -")
         # get message content
         msg_content = row[i+1:]
     #  check if row is empty, return nothing
